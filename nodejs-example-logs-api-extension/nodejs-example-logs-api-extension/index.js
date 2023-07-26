@@ -36,7 +36,7 @@ const RECEIVER_NAME = 'sandbox';
 async function receiverAddress() {
   return process.env.AWS_SAM_LOCAL === 'true' ? LOCAL_DEBUGGING_IP : RECEIVER_NAME;
 }
-const ES_INDEX = `lambda-${process.env.AWS_LAMBDA_FUNCTION_NAME}`.toLowerCase;
+const ES_INDEX = `lambda-${process.env.AWS_LAMBDA_FUNCTION_NAME}`.toLowerCase();
 const ELASTICSEARCH_ENDPOINT = process.env.ELASTICSEARCH_ADD_DOC_ENDPOINT || `https://${process.env.ES_ENDPOINT}/${ES_INDEX}/_doc`; // Replace with your Elasticsearch insertion endpoint along with <index>/_doc
 
 const RECEIVER_PORT = 4243;
