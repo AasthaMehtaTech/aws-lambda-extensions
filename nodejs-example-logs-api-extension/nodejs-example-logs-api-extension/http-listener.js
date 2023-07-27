@@ -6,7 +6,6 @@ function transformRecord(input) {
     const formattedInput = input
         .replace(/\n/g, "").replace(/\\"/g, '\\\\"') // Replace new lines & spaces
 
-    console.log(formattedInput);
     // Step 2: Parse the entire JSON string (except the message field)
     const result = JSON.parse(JSON.stringify(formattedInput));
     return result;
@@ -34,7 +33,7 @@ function processBatch(batch) {
                 }
             }
 
-
+            console.log('DEBUG entry:', {message, ...data,});
             return {
                 time,
                 requestId,
