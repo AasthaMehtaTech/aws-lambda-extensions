@@ -1,14 +1,26 @@
 const http = require('http');
 
-function transformRecord(input) {
+function parseRecord(input) {
 
-    // Step 1: Fix the single quotes and unescape the inner JSON in the message field
-    const formattedInput = input
-        .replace(/\n/g, "").replace(/\\"/g, '\\\\"') // Replace new lines & spaces
+    // Regular expressions for key and value
+    const keyPattern = /(\w+):/g;
+    const valuePattern = /'([^']*)'/g;
 
-    // Step 2: Parse the entire JSON string (except the message field)
-    const result = JSON.parse(JSON.stringify(formattedInput));
-    return result;
+    // Search regex
+    const searchWithRegExp = new RegExp(`${keyPattern.source}\\s*${valuePattern.source}`, 'gm');
+
+    // Find everything that matches with the combined "{key}: {value}" regex sequence
+    const matches = [...input.matchAll(searchWithRegExp)];
+
+    // Combine matches into an object
+    const parsedRecordObj = {};
+    matches.forEach(match => {
+        const key = match[1];
+        const value = match[2];
+        parsedRecordObj[key] = value.startsWith('{') ? JSON.parse(value) : value;
+    });
+
+    return parsedRecordObj;
 
 }
 function processBatch(batch) {
@@ -23,23 +35,24 @@ function processBatch(batch) {
             let message = '';
 
             if (level === 'ERROR') {
-                const stack = recordParts.slice(3).join("\t");
+                const stack = recordParts.slice(3).join(" ");
                 data = { stack, level: 'error' };
             } else {
                 try {
-                    data = transformRecord(recordParts[3]);
+                    data = parseRecord(recordParts[3]);
                 } catch (err) {
                     message = recordParts[3];
                 }
             }
 
-            console.log('DEBUG entry:', {message, ...data,});
-            return {
+            console.log('DEBUG entry:', { message, ...data, });
+            const result = {
                 time,
                 requestId,
                 message,
                 ...data,
-            };
+            }
+            return JSON.stringify(result);
         });
 
     return processedBatch;
