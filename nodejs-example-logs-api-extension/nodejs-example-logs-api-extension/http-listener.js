@@ -4,7 +4,7 @@ function parseRecord(input) {
 
     // Regular expressions for key and value
     const keyPattern = /(\w+):/g;
-    const valuePattern = /'([^']*)'/g;
+    const valuePattern = /(?:'([^']*)'|(?!'|\s*{)([^,}]*))/g;
 
     // Search regex
     const searchWithRegExp = new RegExp(`${keyPattern.source}\\s*${valuePattern.source}`, 'gm');
@@ -16,8 +16,8 @@ function parseRecord(input) {
     const parsedRecordObj = {};
     matches.forEach(match => {
         const key = match[1];
-        const value = match[2];
-        parsedRecordObj[key] = value.startsWith('{') ? JSON.parse(value) : value;
+        const value = match[2] !== undefined ? match[2] : match[3];
+        parsedRecordObj[key] = value;
     });
 
     return parsedRecordObj;
