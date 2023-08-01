@@ -21,7 +21,6 @@ function parseRecord(input) {
     });
 
     return parsedRecordObj;
-
 }
 function processBatch(batch) {
     const processedBatch = batch
@@ -41,7 +40,7 @@ function processBatch(batch) {
                 try {
                     data = parseRecord(recordParts[3]);
                 } catch (err) {
-                    message = recordParts[3];
+                    message = recordParts.slice(3).join(" ");
                 }
             }
 
@@ -52,7 +51,7 @@ function processBatch(batch) {
                 message,
                 ...data,
             }
-            return JSON.stringify(result);
+            return result;
         });
 
     return processedBatch;
