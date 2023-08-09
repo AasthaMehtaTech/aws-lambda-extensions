@@ -3,6 +3,7 @@ const { register, next } = require('./extensions-api');
 const { subscribe } = require('./logs-api');
 const { listen } = require('./http-listener');
 const https = require('https');
+const { format } = require('date-fns');
 
 /**
 
@@ -17,27 +18,32 @@ the SHUTDOWN event.
 */
 
 const EventType = {
-  INVOKE: 'INVOKE',
-  SHUTDOWN: 'SHUTDOWN',
+    INVOKE: 'INVOKE',
+    SHUTDOWN: 'SHUTDOWN',
 };
 
 function handleShutdown(event) {
-  console.log('shutdown', { event });
-  process.exit(0);
+    // console.log('shutdown', { event });
+    process.exit(0);
 }
 
 function handleInvoke(event) {
-  console.log('invoke');
+    // console.log('invoke');
 }
 
 const LOCAL_DEBUGGING_IP = '0.0.0.0';
 const RECEIVER_NAME = 'sandbox';
 
 async function receiverAddress() {
-  return process.env.AWS_SAM_LOCAL === 'true' ? LOCAL_DEBUGGING_IP : RECEIVER_NAME;
+    return process.env.AWS_SAM_LOCAL === 'true' ? LOCAL_DEBUGGING_IP : RECEIVER_NAME;
 }
-const ES_INDEX = `lambda-${process.env.AWS_LAMBDA_FUNCTION_NAME}`.toLowerCase();
-const ELASTICSEARCH_ENDPOINT = process.env.ELASTICSEARCH_ADD_DOC_ENDPOINT || `https://${process.env.ES_ENDPOINT}/${ES_INDEX}/_doc`; // Replace with your Elasticsearch insertion endpoint along with <index>/_doc
+
+const currentDate = new Date();
+const formattedDate = format(currentDate, 'yyyy-MM-dd');
+const INDEX_PART = process.env.ES_SERVICE_NAME || process.env.SERVICE || process.env.AWS_LAMBDA_FUNCTION_NAME || '';
+const INDEX_SUFFIX = formattedDate;
+const ELASTICSEARCH_INDEX = `lambda-${INDEX_PART}-${INDEX_SUFFIX}`.toLowerCase();
+const ELASTICSEARCH_ENDPOINT = process.env.ELASTICSEARCH_ADD_DOC_ENDPOINT || `https://${process.env.ELASTICSEARCH_URL}/${ELASTICSEARCH_INDEX}/_doc`; // Replace with your Elasticsearch insertion endpoint along with <index>/_doc
 
 const RECEIVER_PORT = 4243;
 const TIMEOUT_MS = 1000; // Maximum time (in milliseconds) that a batch is buffered.
@@ -45,33 +51,33 @@ const MAX_BYTES = 262144; // Maximum size in bytes that the logs are buffered in
 const MAX_ITEMS = 10000; // Maximum number of events that are buffered in memory.
 
 const SUBSCRIPTION_BODY = {
-  destination: {
-      protocol: 'HTTP',
-      URI: `http://${RECEIVER_NAME}:${RECEIVER_PORT}`,
-  },
-  types: ['platform', 'function'],
-  buffering: {
-      timeoutMs: TIMEOUT_MS,
-      maxBytes: MAX_BYTES,
-      maxItems: MAX_ITEMS,
-  },
+    destination: {
+        protocol: 'HTTP',
+        URI: `http://${RECEIVER_NAME}:${RECEIVER_PORT}`,
+    },
+    types: ['platform', 'function'],
+    buffering: {
+        timeoutMs: TIMEOUT_MS,
+        maxBytes: MAX_BYTES,
+        maxItems: MAX_ITEMS,
+    },
 };
 
 (async function main() {
     process.on('SIGINT', () => handleShutdown('SIGINT'));
     process.on('SIGTERM', () => handleShutdown('SIGTERM'));
 
-    console.log('hello from logs api extension');
+    // console.log('hello from logs api extension');
 
-    console.log('register');
+    // console.log('register');
     const extensionId = await register();
-    console.log('extensionId', extensionId);
+    // console.log('extensionId', extensionId);
 
-    console.log('starting listener');
+    // console.log('starting listener');
     // listen returns `logsQueue`, a mutable array that collects logs received from Logs API
     const { logsQueue, server } = listen(await receiverAddress(), RECEIVER_PORT);
 
-    console.log('subscribing listener');
+    // console.log('subscribing listener');
     // subscribing listener to the Logs API
     await subscribe(extensionId, SUBSCRIPTION_BODY, server);
 
@@ -81,7 +87,7 @@ const SUBSCRIPTION_BODY = {
         logsQueue.forEach(log => {
             try {
                 const postData = JSON.stringify(log);
-                console.log('postdata DEBUG:', postData);
+                // console.log('postdata DEBUG:', postData);
                 const options = {
                     method: 'POST',
                     headers: {
@@ -91,9 +97,19 @@ const SUBSCRIPTION_BODY = {
                 };
 
                 const req = https.request(ELASTICSEARCH_ENDPOINT, options, (res) => {
-                    console.log(res);
+                    // console.log(res);
                     console.log(`Status code: ${res?.statusCode}`);
-                });               
+
+                    let responseData = '';
+                    res.on('data', (chunk) => {
+                        responseData += chunk;
+                    });
+
+                    // This event listener is called when the response is complete
+                    res.on('end', () => {
+                        console.log('Elastic Search Response Data:', responseData);
+                    });
+                });
 
                 req.on('error', (error) => {
                     console.error(`[${this.agent_name}] Error: ${error}`, flush = true);
@@ -112,7 +128,7 @@ const SUBSCRIPTION_BODY = {
 
     // execute extensions logic to process & export Logs [events captured in the queue]
     while (true) {
-        console.log('next');
+        // console.log('next');
         const event = await next(extensionId);
 
         switch (event.eventType) {

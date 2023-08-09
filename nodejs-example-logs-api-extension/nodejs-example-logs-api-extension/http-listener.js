@@ -44,7 +44,7 @@ function processBatch(batch) {
                 }
             }
 
-            console.log('DEBUG entry:', { message, ...data, });
+            // console.log('DEBUG entry:', { message, ...data, });
             const result = {
                 time,
                 requestId,
@@ -67,32 +67,32 @@ function listen(address, port) {
                 body += data;
             });
             request.on('end', function () {
-                console.log('Logs listener received: ' + body);
+                // console.log('Logs listener received: ' + body);
                 try {
                     let batch = JSON.parse(body);
-                    console.log('DEBUG body:', body);
+                    // console.log('DEBUG body:', body);
                     // console.log('DEBUG batch:', batch);
                     const processedBatch = processBatch(batch);
-                    console.log('DEBUG processedBatch:', processedBatch);
+                    // console.log('DEBUG processedBatch:', processedBatch);
 
                     if (processedBatch.length > 0) {
                         logsQueue.push(...processedBatch);
                     }
                 } catch (e) {
-                    console.log("failed to parse logs");
+                    console.log("failed to parse logs", e);
                 }
                 response.writeHead(200, {})
                 response.end("OK")
             });
         } else {
-            console.log('GET');
+            // console.log('GET');
             response.writeHead(200, {});
             response.end("OK");
         }
     });
 
     server.listen(port, address);
-    console.log(`Listening for logs at http://${address}:${port}`);
+    // console.log(`Listening for logs at http://${address}:${port}`);
     return { logsQueue, server };
 }
 
