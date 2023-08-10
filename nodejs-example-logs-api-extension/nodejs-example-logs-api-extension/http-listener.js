@@ -37,6 +37,9 @@ function processBatch(batch) {
                 data = { stack, level: 'error' };
             } else {
                 let recordData = recordParts[3] + '';
+                if(process.env.DEBUG_LAYER) {
+                    console.log('RECORD DATA DEBUG: ', recordData);
+                }
                 if (recordData.includes('winston_log_agent')) {
                     try {
                         data = parseRecord(recordData);
