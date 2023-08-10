@@ -30,7 +30,7 @@ function processBatch(batch) {
             const time = recordParts[0];
             const requestId = recordParts[1];
             const level = recordParts[2];
-            let data = {};
+            let data = undefined;
 
             if (level === 'ERROR') {
                 const stack = recordParts.slice(2).join(" ");
