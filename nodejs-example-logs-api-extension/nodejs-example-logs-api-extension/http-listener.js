@@ -34,9 +34,11 @@ function processBatch(batch) {
 
             if (level === 'ERROR') {
                 const stack = recordParts.slice(2).join(" ");
-                data = { stack, level: 'error' };
+                if (stack.includes('winston_log_agent')) {
+                    data = { stack, level: 'error' };
+                }
             } else {
-                let recordData = recordParts[3] + '';
+                let recordData = recordParts.slice(3).join(" ");
                 if(process.env.DEBUG_LAYER) {
                     console.log('RECORD DATA DEBUG: ', recordData);
                 }
@@ -44,7 +46,7 @@ function processBatch(batch) {
                     try {
                         data = parseRecord(recordData);
                     } catch (err) {
-                        data = { detail: recordParts.slice(3).join(" ") };
+                        data = { detail: recordData };
                     }
                 }
             }
