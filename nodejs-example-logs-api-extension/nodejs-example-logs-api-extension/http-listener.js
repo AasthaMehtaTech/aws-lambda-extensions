@@ -45,12 +45,16 @@ function processBatch(batch) {
                     }
                 }
             }
-            // console.log('DEBUG entry:', { message, ...data, });
+            
             const result = data ? {
                 time,
                 requestId,
                 ...data,
             } : {};
+
+            if(process.env.DEBUG_LAYER) {
+                console.log('PARSED RESULT DEBUG: ', result);
+            }
             return result;
         });
     return processedBatch.filter(obj => Object.keys(obj).length !== 0);
