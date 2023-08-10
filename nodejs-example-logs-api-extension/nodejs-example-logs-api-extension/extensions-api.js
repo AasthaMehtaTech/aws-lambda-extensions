@@ -28,14 +28,14 @@ async function register() {
                     const extensionId = res.headers['lambda-extension-identifier'];
                     resolve(extensionId);
                 } else {
-                    console.error('register failed', data);
+                    // console.error('register failed', data);
                     reject(new Error('Registration failed'));
                 }
             });
         });
 
         req.on('error', (error) => {
-            console.error('register error:', error);
+            // console.error('register error:', error);
             reject(error);
         });
 
@@ -66,18 +66,18 @@ async function next(extensionId) {
                         const eventData = JSON.parse(data);
                         resolve(eventData);
                     } catch (error) {
-                        console.error('next failed', error);
+                        // console.error('next failed', error);
                         reject(error);
                     }
                 } else {
-                    console.error('next failed', data);
+                    // console.error('next failed', data);
                     reject(new Error('Next event failed'));
                 }
             });
         });
 
         req.on('error', (error) => {
-            console.error('next error:', error);
+            // console.error('next error:', error);
             reject(error);
         });
 

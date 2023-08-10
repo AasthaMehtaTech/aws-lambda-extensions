@@ -23,15 +23,15 @@ async function subscribe(extensionId, subscriptionBody, server) {
             res.on('end', () => {
                 switch (res.statusCode) {
                     case 200:
-                        console.info('logs subscription ok: ', data);
+                        // console.info('logs subscription ok: ', data);
                         resolve();
                         break;
                     case 202:
-                        console.warn('WARNING!!! Logs API is not supported! Is this extension running in a local sandbox?');
+                        // console.warn('WARNING!!! Logs API is not supported! Is this extension running in a local sandbox?');
                         resolve();
                         break;
                     default:
-                        console.error('logs subscription failed: ', data);
+                        // console.error('logs subscription failed: ', data);
                         reject(new Error('Logs subscription failed'));
                         break;
                 }
@@ -39,7 +39,7 @@ async function subscribe(extensionId, subscriptionBody, server) {
         });
 
         req.on('error', (error) => {
-            console.error('logs subscription error:', error);
+            // console.error('logs subscription error:', error);
             reject(error);
         });
 

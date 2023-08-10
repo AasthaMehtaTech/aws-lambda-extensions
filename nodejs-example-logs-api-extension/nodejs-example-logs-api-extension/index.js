@@ -83,7 +83,7 @@ const SUBSCRIPTION_BODY = {
 
     // function for processing collected logs
     function sendLogsToElasticsearch() {
-        console.log(`collected ${logsQueue.length} log objects`);
+        // console.log(`collected ${logsQueue.length} log objects`);
         logsQueue.forEach(log => {
             try {
                 const postData = JSON.stringify(log);
@@ -98,7 +98,7 @@ const SUBSCRIPTION_BODY = {
 
                 const req = https.request(ELASTICSEARCH_ENDPOINT, options, (res) => {
                     // console.log(res);
-                    console.log(`Status code: ${res?.statusCode}`);
+                    // console.log(`Status code: ${res?.statusCode}`);
 
                     let responseData = '';
                     res.on('data', (chunk) => {
@@ -107,7 +107,7 @@ const SUBSCRIPTION_BODY = {
 
                     // This event listener is called when the response is complete
                     res.on('end', () => {
-                        console.log('Elastic Search Response Data:', responseData);
+                        // console.log('Elastic Search Response Data:', responseData);
                     });
                 });
 
@@ -115,9 +115,12 @@ const SUBSCRIPTION_BODY = {
                     console.error(`[${this.agent_name}] Error: ${error}`, flush = true);
                 });
 
+                if(process.env.DEBUG_LAYER) {
+                    console.log('POSTDATA DEBUG: ', postData);
+                }
                 req.write(postData);
                 req.end();
-                console.log('DEBUG: log processing & es exporting complete to endpoint:', ELASTICSEARCH_ENDPOINT);
+                // console.log('DEBUG: log processing & es exporting complete to endpoint:', ELASTICSEARCH_ENDPOINT);
 
             } catch (error) {
                 console.error(`[${this.agent_name}] Error: ${error}`, flush = true);
