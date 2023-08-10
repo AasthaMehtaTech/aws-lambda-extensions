@@ -31,30 +31,29 @@ function processBatch(batch) {
             const requestId = recordParts[1];
             const level = recordParts[2];
             let data = {};
-            let message = '';
 
             if (level === 'ERROR') {
-                const stack = recordParts.slice(3).join(" ");
+                const stack = recordParts.slice(2).join(" ");
                 data = { stack, level: 'error' };
             } else {
-                try {
-                    data = parseRecord(recordParts[3]);
-                } catch (err) {
-                    message = recordParts.slice(3).join(" ");
+                let recordData = recordParts[3] + '';
+                if (recordData.includes('winston_log_agent')) {
+                    try {
+                        data = parseRecord(recordData);
+                    } catch (err) {
+                        data = { detail: recordParts.slice(3).join(" ") };
+                    }
                 }
             }
-
             // console.log('DEBUG entry:', { message, ...data, });
-            const result = {
+            const result = data ? {
                 time,
                 requestId,
-                message,
                 ...data,
-            }
+            } : {};
             return result;
         });
-
-    return processedBatch;
+    return processedBatch.filter(obj => Object.keys(obj).length !== 0);
 }
 
 function listen(address, port) {
@@ -70,8 +69,6 @@ function listen(address, port) {
                 // console.log('Logs listener received: ' + body);
                 try {
                     let batch = JSON.parse(body);
-                    // console.log('DEBUG body:', body);
-                    // console.log('DEBUG batch:', batch);
                     const processedBatch = processBatch(batch);
                     // console.log('DEBUG processedBatch:', processedBatch);
 
@@ -85,7 +82,6 @@ function listen(address, port) {
                 response.end("OK")
             });
         } else {
-            // console.log('GET');
             response.writeHead(200, {});
             response.end("OK");
         }
