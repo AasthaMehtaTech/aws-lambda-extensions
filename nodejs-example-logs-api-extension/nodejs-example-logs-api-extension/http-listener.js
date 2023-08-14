@@ -26,39 +26,49 @@ function processBatch(batch) {
     const processedBatch = batch
         .filter((item) => item.type === "function")
         .map((item) => {
-            const recordParts = item.record.split("\t");
-            const time = recordParts[0];
-            const requestId = recordParts[1];
-            const level = recordParts[2];
-            let data = undefined;
-
-            if (level === 'ERROR') {
-                const stack = recordParts.slice(2).join(" ");
-                if (stack.includes('winston_log_agent')) {
-                    data = { stack, level: 'error' };
-                }
-            } else {
-                let recordData = recordParts.slice(3).join(" ");
-                if(process.env.DEBUG_LAYER) {
-                    console.log('RECORD DATA DEBUG: ', recordData);
-                }
-                if (recordData.includes('winston_log_agent')) {
-                    try {
-                        data = parseRecord(recordData);
-                    } catch (err) {
-                        data = { detail: recordData };
-                    }
-                }
+            if (process.env.DEBUG_LAYER) {
+                console.log('RECORD DEBUG: ', item.record);
             }
             
-            const result = data ? {
-                time,
-                requestId,
-                ...data,
-            } : {};
+            let result = {};
+            try { // process parseable winston generated logs
+                result = JSON.parse(item.record)
+            } catch (e) { // process cloudwatch generated logs of format `time req_id level log_record`
+                const recordParts = item.record.split("\t");
+                if (process.env.DEBUG_LAYER) {
+                    console.log('RECORD PARTS DEBUG: ', recordParts);
+                }
+                const timestamp = recordParts[0];
+                const requestId = recordParts[1];
+                const level = recordParts[2];
+                let data = undefined;
 
-            if(process.env.DEBUG_LAYER) {
-                console.log('PARSED RESULT DEBUG: ', result);
+                if (level === 'ERROR') {
+                    const stack = recordParts.slice(2).join(" ");
+                    if (stack.includes('winston_log_agent')) {
+                        data = { stack, level: 'error' };
+                    }
+                } else {
+                    let recordData = recordParts.slice(3).join(" ");
+                    if (recordData.includes('winston_log_agent')) {
+                        try {
+                            data = parseRecord(recordData);
+                        } catch (err) {
+                            data = { detail: recordData };
+                        }
+                    }
+                }
+
+                result = data ? {
+                    timestamp,
+                    requestId,
+                    ...data,
+                } : {};
+
+            }
+
+            if (process.env.DEBUG_LAYER) {
+                console.log('PROCESSED RESULT DEBUG: ', result);
             }
             return result;
         });
