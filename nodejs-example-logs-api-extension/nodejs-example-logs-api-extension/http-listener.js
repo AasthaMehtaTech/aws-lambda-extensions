@@ -45,18 +45,18 @@ function processBatch(batch) {
 
                 if (level === 'ERROR') {
                     const stack = recordParts.slice(2).join(" ");
-                    if (stack.includes('winston_log_agent')) {
+                    if (!stack.includes('flushing')) { // filter out errors in flushing metrics
                         data = { stack, level: 'error' };
                     }
                 } else {
-                    let recordData = recordParts.slice(3).join(" ");
-                    if (recordData.includes('winston_log_agent')) {
-                        try {
-                            data = parseRecord(recordData);
-                        } catch (err) {
-                            data = { detail: recordData };
-                        }
-                    }
+                    // let recordData = recordParts.slice(3).join(" ");
+                    // if (recordData.includes('winston_log_agent')) {
+                    //     try {
+                    //         data = parseRecord(recordData);
+                    //     } catch (err) {
+                    //         data = { detail: recordData };
+                    //     }
+                    // }
                 }
 
                 result = data ? {
